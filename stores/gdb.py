@@ -29,6 +29,11 @@ class GdbClient:
     def _tx_run(self, tx, query):
         return [record for record in tx.run(query)]
 
+    def connection_setup(self, uri, user, password):
+        self._uri = uri
+        self._user = user
+        self._password = password
+
     def create_node(self, node_type, node_details):
         details = self._dict_to_str(node_details)
         query = f"MERGE (n:{node_type} {details}) RETURN n"
@@ -36,7 +41,7 @@ class GdbClient:
             result = session.write_transaction(self._tx_run, query)
         return result
 
-    def create_node_and_relation(
+    def create_node_with_relation(
         self,
         from_node_type,
         from_node_details,
@@ -87,6 +92,29 @@ class GdbClient:
         query = f"MATCH (n:{node_type} {details}) RETURN n"
         with self.driver.session() as session:
             result = session.read_transaction(self._tx_run, query)
+        return result
+
+    def read_node_with_relation(
+        self,
+        from_node_type,
+        from_node_deetails,
+        relation_type,
+        relation_details,
+        to_node_type,
+        to_node_details,
+    ):
+        from_details = self._dict_to_str(from_node_deetails)
+        relationship_details = self._dict_to_str(relation_details)
+        to_details = self._dict_to_str(to_node_details)
+
+        query = (
+            f"MATCH (n1:{from_node_type} {from_details})-"
+            f"[r:{relation_type} {relationship_details}]->"
+            f"(n2:{to_node_type} {to_details}) "
+            "RETURN n1,n2,r"
+        )
+        with self.driver.session() as session:
+            result = session.write_transaction(self._tx_run, query)
         return result
 
     def update_node_details(self, node_type, old_node_details, new_node_details):
