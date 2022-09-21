@@ -4,7 +4,9 @@ import neo4j.exceptions
 
 class GdbClient:
 
-    _uri = "neo4j://127.0.0.1:7687"
+    _uri = "neo4j://localhost:31133"
+    # _uri = "neo4j://0.0.0.0:32441"
+    # _uri = "neo4j://127.0.0.1:7687"
     _user = "neo4j"
     _password = "123"
 
@@ -25,6 +27,10 @@ class GdbClient:
     def _dict_to_str(self, my_dict: dict) -> str:
         mylist = [f"{key}: '{val}'" for key, val in my_dict.items()]
         return "{" + ",".join(mylist) + "}"
+
+    def _dict_to_properties(self, node_variable, my_dict: dict) -> str:
+        mylist = [f"{node_variable}.{key} = '{val}'" for key, val in my_dict.items()]
+        return ",".join(mylist)
 
     def _tx_run(self, tx, query):
         return [record for record in tx.run(query)]
@@ -154,4 +160,63 @@ class GdbClient:
         query = f"MATCH (n:{node_type} {details}) " "DETACH DELETE n"
         with self.driver.session() as session:
             result = session.write_transaction(self._tx_run, query)
+        return result
+
+    def on9(self, tx, prop):
+        return tx.run("CREATE (n:on9) SET n = $props", props=prop)
+
+    # def dllm(self, on9dict):
+    #     node_type = None
+    #     if isinstance(prop, Tenant):
+    #         node_type = NodeType.Tenant
+
+    #     if node_type is None:
+    #         raise ...
+
+    #     with self.driver.session() as session:
+    #         q = f"CREATE (n:{node_type.value}) SET n = $props"
+    #         response = session.run(q, name="on99", props=on9dict)
+    #     return response
+
+    def _dict_to_query_properties(self, my_dict: dict) -> str:
+        my_list = [f" {key}: ${key}" for key in my_dict.keys()]
+        return "{" + ",".join(my_list) + "}"
+
+    def on9_read_node(self, node_type: str, properties: dict):
+
+        with self.driver.session() as session:
+            asdflhjkasd = f"MATCH (n:{node_type} {self._dict_to_query_properties(properties)}) RETURN n"
+            response = session.run(
+                f"MATCH (n:{node_type} {self._dict_to_query_properties(properties)}) RETURN n",
+                properties,
+            )
+            result = [record.value() for record in response]
+        return result
+
+    def on9_read_node2(self, node_type: str, properties: dict):
+
+        with self.driver.session() as session:
+            asdflhjkasd = f"MATCH (n:{node_type}) WHERE n = $prop RETURN n"
+            response = session.run(
+                f"MATCH (n:{node_type})WHERE n = $prop RETURN n",
+                prop=properties,
+            )
+            result = [record.value() for record in response]
+        return result
+
+    def on9_update_node(
+        self, node_type: str, old_properties: dict, new_properties: dict
+    ) -> list[dict]:
+        with self.driver.session() as session:
+            match_response = session.run(
+                f"MATCH (n:{node_type} {self._dict_to_query_properties(old_properties)}) RETURN id(n) AS node_id",
+                old_properties,
+            )
+            node_id = match_response.single()["node_id"]
+            update_response = session.run(
+                f"MATCH (n: {node_type}) WHERE id(n) = {node_id} SET n = $props RETURN n",
+                props=new_properties,
+            )
+            result = update_response.single().value()
+
         return result

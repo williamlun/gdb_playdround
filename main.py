@@ -87,8 +87,21 @@ if __name__ == "__main__":
     # app.find_person("Alice")
     # app.close()
 
+    with stores.gdb.GdbClient() as client:
+        # d = client.on9_read_node("on9", {"name": "1231232341234"})
+        # print(d)
+        # print("123")
+
+        result = client.on9_update_node(
+            "on9", {"name": "wannacry"}, {"name": "1231232341234"}
+        )
+        print(result)
+        print("123")
+        for row in result:
+            print("result: ", row)
+
     # with stores.gdb.GdbClient() as client:
-    #     result = client.read_node("Person", {"class": "a"})
+    #     result = client.read_node("Person", {"class": "aa"})
     #     for row in result:
     #         print("result: ", row)
 
@@ -106,13 +119,6 @@ if __name__ == "__main__":
     #     result = client.delete_node("Person", {1})
     #     for row in result:
     #         print("result: ", row)
-    print("123")
-
-    mydict = {"name": "william", "class": "a"}
-
-    mylist = [f"{key}: '{val}'" for key, val in mydict.items()]
-
-    strque = "{" + ",".join(mylist) + "}"
 
     print("123")
     print("123")
